@@ -3,77 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablero de Posiciones y Preguntas</title>
-    <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; gap: 20px; justify-content: center; }
-        
-        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .panel-leaderboard { width: 45%; }
-        .panel-preguntas { width: 50%; }
-        
-        h2 { border-bottom: 2px solid #3498db; padding-bottom: 10px; color: #2c3e50; }
-        
-        /* Estilos del Tablero */
-        .tabla-posiciones { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .tabla-posiciones th, .tabla-posiciones td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        .tabla-posiciones th { background-color: #3498db; color: white; }
-        
-        /* Animación suave cuando cambian de posición */
-        .fila-participante { transition: all 0.4s ease; }
-        .top-1 { background-color: #f1c40f; font-weight: bold; } /* Oro */
-        .top-2 { background-color: #bdc3c7; } /* Plata */
-        .top-3 { background-color: #e67e22; color: white; } /* Bronce */
-
-        /* Estilos de Preguntas */
-        .filtro-dificultad { margin-bottom: 15px; padding: 8px; border-radius: 4px; }
-        .tarjeta-pregunta { background: #f9f9f9; border-left: 5px solid #bdc3c7; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
-        .tarjeta-pregunta.Facil { border-left-color: #2ecc71; }
-        .tarjeta-pregunta.Medio { border-left-color: #f39c12; }
-        .tarjeta-pregunta.Dificil { border-left-color: #e74c3c; }
-        
-        .badge { padding: 3px 8px; border-radius: 12px; font-size: 12px; color: white; font-weight: bold; }
-        .badge.Facil { background-color: #2ecc71; }
-        .badge.Medio { background-color: #f39c12; }
-        .badge.Dificil { background-color: #e74c3c; }
-
-        .acciones { margin-top: 10px; display: flex; gap: 5px; }
-        input[type="number"], select { padding: 5px; width: 70px; }
-        button { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #2980b9; }
-    </style>
+    <title>BibleQuiz Board</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div class="container panel-leaderboard">
-        <h2>🏆 Tabla de Posiciones</h2>
-        <table class="tabla-posiciones">
-            <thead>
-                <tr>
-                    <th>Pos</th>
-                    <th>Participante</th>
-                    <th>Puntos</th>
-                    <th>Modificar</th>
-                </tr>
-            </thead>
-            <tbody id="tbody-leaderboard">
-                </tbody>
-        </table>
-    </div>
-
-    <div class="container panel-preguntas">
-        <h2>❓ Banco de Preguntas</h2>
-        <label for="filtro">Filtrar por dificultad: </label>
-        <select id="filtro" class="filtro-dificultad" onchange="renderizarPreguntas()">
-            <option value="Todas">Todas</option>
-            <option value="Facil">Fácil</option>
-            <option value="Medio">Medio</option>
-            <option value="Dificil">Difícil</option>
-        </select>
-
-        <div id="contenedor-preguntas">
+    <!-- HEADER -->
+    <header class="site-header">
+        <div class="header-content">
+            <div class="logo">
+          
+                <span class="logo-text">Bible<span class="logo-accent">Quiz</span></span>
             </div>
+        </div>
+    </header>
+
+    <!-- TABS NAV -->
+    <nav class="tabs-nav">
+        <div class="tabs-inner">
+            <button class="tab-btn active" data-tab="tab-tablero"   onclick="cambiarTab(this)">
+                <span>🏆</span> Tablero
+            </button>
+            <button class="tab-btn" data-tab="tab-equipos" onclick="cambiarTab(this)">
+                <span>👥</span> Equipos
+            </button>
+            <button class="tab-btn" data-tab="tab-preguntas" onclick="cambiarTab(this)">
+                <span>❓</span> Preguntas
+            </button>
+            <button class="tab-btn" data-tab="tab-historial" onclick="cambiarTab(this)">
+                <span>📋</span> Historial
+            </button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+
+        <!-- ===== TAB: TABLERO ===== -->
+        <section id="tab-tablero" class="tab-panel active">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><span class="icon">🏆</span> Tabla de Posiciones</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="resetearPuntos()">Resetear</button>
+                        <button class="btn btn-ghost btn-sm" onclick="abrirModal('modal-participante')">+ Participante</button>
+                        <button class="btn btn-finish btn-sm" onclick="finalizarPartida()">Finalizar partida</button>
+                    </div>
+                </div>
+                <div id="leaderboard-container" class="leaderboard-container"></div>
+            </div>
+        </section>
+
+        <!-- ===== TAB: EQUIPOS ===== -->
+        <section id="tab-equipos" class="tab-panel">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><span class="icon">👥</span> Partida por Equipos</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="resetearEquipos()">Resetear</button>
+                        <button class="btn btn-ghost btn-sm" onclick="abrirModal('modal-equipo')">+ Equipo</button>
+                        <button class="btn btn-finish btn-sm" onclick="finalizarPartidaEquipos()">Finalizar partida</button>
+                    </div>
+                </div>
+                <div id="equipos-container" class="equipos-container"></div>
+            </div>
+        </section>
+
+        <!-- ===== TAB: PREGUNTAS ===== -->
+        <section id="tab-preguntas" class="tab-panel">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><span class="icon">❓</span> Banco de Preguntas</h2>
+                    <button class="btn btn-primary btn-sm" onclick="abrirModal('modal-pregunta')">+ Agregar</button>
+                </div>
+                <div class="filtros-bar">
+                    <button class="filtro-btn active" data-filtro="Todas"   onclick="setFiltro(this)">Todas</button>
+                    <button class="filtro-btn facil"  data-filtro="Facil"   onclick="setFiltro(this)">Fácil</button>
+                    <button class="filtro-btn medio"  data-filtro="Medio"   onclick="setFiltro(this)">Medio</button>
+                    <button class="filtro-btn dificil" data-filtro="Dificil" onclick="setFiltro(this)">Difícil</button>
+                    <span id="contador-preguntas" class="preguntas-count"></span>
+                </div>
+                <div id="contenedor-preguntas" class="contenedor-preguntas"></div>
+            </div>
+        </section>
+
+        <!-- ===== TAB: HISTORIAL ===== -->
+        <section id="tab-historial" class="tab-panel">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><span class="icon">📋</span> Historial de Partidas</h2>
+                    <button class="btn btn-danger-soft btn-sm" onclick="limpiarHistorial()">🗑 Limpiar todo</button>
+                </div>
+                <div id="historial-container" class="historial-container"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL PARTICIPANTE -->
+    <div id="modal-participante" class="modal-overlay" onclick="cerrarOverlay(event,'modal-participante')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>👤 Nuevo Participante</h3>
+                <button class="modal-close" onclick="cerrarModal('modal-participante')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Nombre</label>
+                <input type="text" id="input-nombre" class="form-input" placeholder="Ej: María García" maxlength="30"
+                       onkeydown="if(event.key==='Enter') agregarParticipante()">
+                <div class="form-actions">
+                    <button class="btn btn-ghost" onclick="cerrarModal('modal-participante')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="agregarParticipante()">Agregar</button>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- MODAL PREGUNTA -->
+    <div id="modal-pregunta" class="modal-overlay" onclick="cerrarOverlay(event,'modal-pregunta')">
+        <div class="modal-box modal-box-lg">
+            <div class="modal-header">
+                <h3>📝 Nueva Pregunta</h3>
+                <button class="modal-close" onclick="cerrarModal('modal-pregunta')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Pregunta</label>
+                <textarea id="input-pregunta" class="form-input form-textarea" placeholder="Escribe la pregunta..." maxlength="300"></textarea>
+                <label class="form-label">Respuesta correcta</label>
+                <input type="text" id="input-respuesta" class="form-input" placeholder="Respuesta" maxlength="200">
+                <label class="form-label">Dificultad</label>
+                <div class="dificultad-selector">
+                    <button class="diff-btn facil active" data-val="Facil"   onclick="selDiff(this)">Fácil</button>
+                    <button class="diff-btn medio"        data-val="Medio"   onclick="selDiff(this)">Medio</button>
+                    <button class="diff-btn dificil"      data-val="Dificil" onclick="selDiff(this)">Difícil</button>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-ghost" onclick="cerrarModal('modal-pregunta')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="agregarPregunta()">Agregar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO EQUIPO -->
+    <div id="modal-equipo" class="modal-overlay" onclick="cerrarOverlay(event,'modal-equipo')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>👥 Nuevo Equipo</h3>
+                <button class="modal-close" onclick="cerrarModal('modal-equipo')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Nombre del equipo</label>
+                <input type="text" id="input-equipo-nombre" class="form-input" placeholder="Ej: Equipo Rojo" maxlength="30"
+                       onkeydown="if(event.key==='Enter') agregarEquipo()">
+                <label class="form-label">Color</label>
+                <div class="color-selector" id="color-selector">
+                    <button class="color-swatch active" data-color="#ef4444" style="background:#ef4444" onclick="selColor(this)"></button>
+                    <button class="color-swatch" data-color="#f97316" style="background:#f97316" onclick="selColor(this)"></button>
+                    <button class="color-swatch" data-color="#eab308" style="background:#eab308" onclick="selColor(this)"></button>
+                    <button class="color-swatch" data-color="#22c55e" style="background:#22c55e" onclick="selColor(this)"></button>
+                    <button class="color-swatch" data-color="#06b6d4" style="background:#06b6d4" onclick="selColor(this)"></button>
+                    <button class="color-swatch" data-color="#3b82f6" style="background:#3b82f6" onclick="selColor(this)"></button>
+                    <button class="color-swatch" data-color="#8b5cf6" style="background:#8b5cf6" onclick="selColor(this)"></button>
+                    <button class="color-swatch" data-color="#ec4899" style="background:#ec4899" onclick="selColor(this)"></button>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-ghost" onclick="cerrarModal('modal-equipo')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="agregarEquipo()">Crear equipo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR MIEMBRO A EQUIPO -->
+    <div id="modal-miembro-equipo" class="modal-overlay" onclick="cerrarOverlay(event,'modal-miembro-equipo')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>👤 Agregar Miembro</h3>
+                <button class="modal-close" onclick="cerrarModal('modal-miembro-equipo')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-miembro-equipo-label" class="equipo-modal-badge"></div>
+                <label class="form-label">Nombre</label>
+                <input type="text" id="input-miembro-nombre" class="form-input" placeholder="Ej: Pedro López" maxlength="30"
+                       onkeydown="if(event.key==='Enter') agregarMiembro()">
+                <div class="form-actions">
+                    <button class="btn btn-ghost" onclick="cerrarModal('modal-miembro-equipo')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="agregarMiembro()">Agregar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RESULTADOS EQUIPOS -->
+    <div id="modal-resultados-equipos" class="modal-overlay modal-resultados" onclick="cerrarOverlay(event,'modal-resultados-equipos')">
+        <div class="modal-box">
+            <div class="resultados-header">
+                <span class="resultados-trophy">🏆</span>
+                <div class="resultados-titulo">Resultados por Equipos</div>
+                <div class="resultados-subtitulo" id="resultados-equipos-subtitulo">Partida finalizada</div>
+            </div>
+            <div class="resultados-body">
+                <div class="podio-top3" id="podio-top3-equipos"></div>
+                <div class="resultados-lista" id="resultados-lista-equipos"></div>
+            </div>
+            <div id="resultados-equipos-mvp" class="resultados-mvp"></div>
+            <div class="resultados-acciones">
+                <button class="btn btn-ghost" onclick="cerrarModal('modal-resultados-equipos')">Cerrar</button>
+                <button class="btn btn-primary" onclick="cerrarModal('modal-resultados-equipos'); resetearEquipos()">Nueva partida</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RESULTADOS FINALES -->
+    <div id="modal-partida" class="modal-overlay modal-resultados" onclick="cerrarOverlay(event,'modal-partida')">
+        <div class="modal-box">
+            <div class="resultados-header">
+                <span class="resultados-trophy">🏆</span>
+                <div class="resultados-titulo">Resultados Finales</div>
+                <div class="resultados-subtitulo" id="resultados-subtitulo">Partida finalizada</div>
+            </div>
+            <div class="resultados-body">
+                <div class="podio-top3" id="podio-top3"></div>
+                <div class="resultados-lista" id="resultados-lista"></div>
+            </div>
+            <div class="resultados-acciones">
+                <button class="btn btn-ghost" onclick="cerrarModal('modal-partida')">Cerrar</button>
+                <button class="btn btn-primary" onclick="cerrarModal('modal-partida'); resetearPuntos()">Nueva partida</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
 
     <script src="app.js"></script>
 </body>
