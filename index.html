@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Posiciones y Preguntas</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; gap: 20px; justify-content: center; }
+        
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .panel-leaderboard { width: 45%; }
+        .panel-preguntas { width: 50%; }
+        
+        h2 { border-bottom: 2px solid #3498db; padding-bottom: 10px; color: #2c3e50; }
+        
+        /* Estilos del Tablero */
+        .tabla-posiciones { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .tabla-posiciones th, .tabla-posiciones td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .tabla-posiciones th { background-color: #3498db; color: white; }
+        
+        /* Animación suave cuando cambian de posición */
+        .fila-participante { transition: all 0.4s ease; }
+        .top-1 { background-color: #f1c40f; font-weight: bold; } /* Oro */
+        .top-2 { background-color: #bdc3c7; } /* Plata */
+        .top-3 { background-color: #e67e22; color: white; } /* Bronce */
+
+        /* Estilos de Preguntas */
+        .filtro-dificultad { margin-bottom: 15px; padding: 8px; border-radius: 4px; }
+        .tarjeta-pregunta { background: #f9f9f9; border-left: 5px solid #bdc3c7; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
+        .tarjeta-pregunta.Facil { border-left-color: #2ecc71; }
+        .tarjeta-pregunta.Medio { border-left-color: #f39c12; }
+        .tarjeta-pregunta.Dificil { border-left-color: #e74c3c; }
+        
+        .badge { padding: 3px 8px; border-radius: 12px; font-size: 12px; color: white; font-weight: bold; }
+        .badge.Facil { background-color: #2ecc71; }
+        .badge.Medio { background-color: #f39c12; }
+        .badge.Dificil { background-color: #e74c3c; }
+
+        .acciones { margin-top: 10px; display: flex; gap: 5px; }
+        input[type="number"], select { padding: 5px; width: 70px; }
+        button { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+
+    <div class="container panel-leaderboard">
+        <h2>🏆 Tabla de Posiciones</h2>
+        <table class="tabla-posiciones">
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th>Participante</th>
+                    <th>Puntos</th>
+                    <th>Modificar</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-leaderboard">
+                </tbody>
+        </table>
+    </div>
+
+    <div class="container panel-preguntas">
+        <h2>❓ Banco de Preguntas</h2>
+        <label for="filtro">Filtrar por dificultad: </label>
+        <select id="filtro" class="filtro-dificultad" onchange="renderizarPreguntas()">
+            <option value="Todas">Todas</option>
+            <option value="Facil">Fácil</option>
+            <option value="Medio">Medio</option>
+            <option value="Dificil">Difícil</option>
+        </select>
+
+        <div id="contenedor-preguntas">
+            </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
