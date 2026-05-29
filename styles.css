@@ -827,8 +827,207 @@ body {
 }
 
 /* =============================================
-   RESPONSIVE
+   MODO JUEGO
    ============================================= */
+.jugar-inicio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 52px 24px;
+    text-align: center;
+}
+.jugar-inicio-icon {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; color: #fff;
+    box-shadow: 0 8px 24px rgba(79,70,229,0.3);
+    margin-bottom: 4px;
+}
+.jugar-inicio-titulo { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; color: var(--text); }
+.jugar-inicio-desc   { font-size: 14px; color: var(--text-muted); line-height: 1.6; max-width: 400px; }
+
+.jugar-inicio-info {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
+.jugar-info-chip {
+    padding: 5px 14px; border-radius: 20px;
+    background: var(--primary-lt); color: var(--primary);
+    border: 1px solid #c4b5fd; font-size: 13px; font-weight: 600;
+}
+
+.jugar-inicio-puntos {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
+.jugar-pts-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+.pts-chip {
+    padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1px solid transparent;
+}
+.pts-chip.facil   { background: var(--facil-bg);   color: var(--facil);   border-color: #6ee7b7; }
+.pts-chip.medio   { background: var(--medio-bg);   color: var(--medio);   border-color: #fcd34d; }
+.pts-chip.dificil { background: var(--dificil-bg); color: var(--dificil); border-color: #fca5a5; }
+
+/* Panel activo */
+.jugar-activo { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+
+/* Barra progreso */
+.jugar-progreso-wrap { display: flex; flex-direction: column; gap: 7px; }
+.jugar-progreso-info {
+    display: flex; justify-content: space-between;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+}
+.jugar-progreso-bar {
+    height: 7px; background: var(--bg2); border-radius: 10px; overflow: hidden; border: 1px solid var(--border);
+}
+.jugar-progreso-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #4f46e5);
+    border-radius: 10px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tarjeta pregunta */
+.jugar-pregunta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(79,70,229,0.08);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+.jugar-pregunta-card.jugar-acierto {
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+    box-shadow: 0 4px 24px rgba(5,150,105,0.15);
+}
+.jugar-pregunta-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+}
+.jugar-pts-valor {
+    font-size: 14px; font-weight: 800;
+    padding: 4px 12px; border-radius: 20px; border: 1px solid transparent;
+}
+.jugar-pts-valor.diff-facil   { background: var(--facil-bg);   color: var(--facil);   border-color: #6ee7b7; }
+.jugar-pts-valor.diff-medio   { background: var(--medio-bg);   color: var(--medio);   border-color: #fcd34d; }
+.jugar-pts-valor.diff-dificil { background: var(--dificil-bg); color: var(--dificil); border-color: #fca5a5; }
+
+.jugar-pregunta-texto {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.55;
+    letter-spacing: -0.2px;
+    margin-bottom: 4px;
+}
+.jugar-respuesta-wrap {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+}
+
+/* Participantes en modo juego */
+.jugar-participantes-titulo {
+    font-size: 13px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    text-align: center;
+}
+.jugar-participantes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+.jugar-participante-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.18s ease;
+    text-align: left;
+}
+.jugar-participante-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-lt);
+    box-shadow: 0 4px 16px rgba(79,70,229,0.15);
+    transform: translateY(-2px);
+}
+.jugar-participante-btn:active {
+    transform: translateY(0) scale(0.97);
+}
+.jugar-part-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--bg2);
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 800; color: var(--primary);
+    flex-shrink: 0;
+}
+.jugar-participante-btn:hover .jugar-part-avatar {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.jugar-part-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.jugar-part-nombre { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jugar-part-pts    { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.jugar-part-suma {
+    font-size: 16px; font-weight: 800; color: var(--primary);
+    background: var(--primary-lt); border-radius: 8px;
+    padding: 2px 8px; flex-shrink: 0; opacity: 0;
+    transition: opacity 0.15s;
+}
+.jugar-participante-btn:hover .jugar-part-suma { opacity: 1; }
+
+/* Modo selector (Individual / Equipos) */
+.jugar-modo-selector {
+    display: flex; gap: 12px; width: 100%; max-width: 440px;
+}
+.jugar-modo-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 14px 10px;
+    border-radius: 14px; border: 2px solid var(--border);
+    background: var(--surface); cursor: pointer;
+    font-family: inherit; transition: all 0.18s ease;
+}
+.jugar-modo-btn:hover { border-color: var(--primary); background: var(--primary-lt); }
+.jugar-modo-btn.active {
+    border-color: var(--primary);
+    background: var(--primary-lt);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+}
+.jugar-modo-icon  { font-size: 26px; line-height: 1; }
+.jugar-modo-label { font-size: 14px; font-weight: 700; color: var(--text); }
+.jugar-modo-sub   { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.3; }
+
+/* Botón "Volver a equipos" dentro del juego */
+.jugar-btn-volver {
+    gap: 10px;
+    background: var(--bg2) !important;
+    border-color: var(--border) !important;
+    justify-content: flex-start;
+}
+.jugar-btn-volver:hover { background: var(--bg) !important; }
+
+/* Footer de acciones */
+.jugar-footer {
+    display: flex; justify-content: center; gap: 10px;
+    padding-top: 4px;
+}
+
+/* =============================================
+   RESPONSIVE (adicional)
+   ============================================= */
+@media (max-width: 700px) {
+    .jugar-pregunta-texto { font-size: 16px; }
+    .jugar-participantes  { grid-template-columns: 1fr 1fr; }
+}
 @media (max-width: 700px) {
     .site-header { padding: 0 16px; }
     .main-content { padding: 14px 12px; }

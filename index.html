@@ -26,6 +26,9 @@
             <button class="tab-btn active" data-tab="tab-tablero"   onclick="cambiarTab(this)">
                 <span>🏆</span> Tablero
             </button>
+            <button class="tab-btn" data-tab="tab-jugar" onclick="cambiarTab(this)">
+                <span>▶</span> Jugar
+            </button>
             <button class="tab-btn" data-tab="tab-equipos" onclick="cambiarTab(this)">
                 <span>👥</span> Equipos
             </button>
@@ -39,6 +42,88 @@
     </nav>
 
     <main class="main-content">
+
+        <!-- ===== TAB: JUGAR ===== -->
+        <section id="tab-jugar" class="tab-panel">
+            <!-- Estado: sin juego activo -->
+            <div id="jugar-inicio" class="jugar-inicio">
+                <div class="jugar-inicio-icon">▶</div>
+                <h2 class="jugar-inicio-titulo">Modo Juego</h2>
+
+                <!-- Selector de modo -->
+                <div class="jugar-modo-selector">
+                    <button class="jugar-modo-btn active" id="modo-btn-individual" onclick="selModoJuego('individual', this)">
+                        <span class="jugar-modo-icon">👤</span>
+                        <span class="jugar-modo-label">Individual</span>
+                        <span class="jugar-modo-sub">Cada participante juega por su cuenta</span>
+                    </button>
+                    <button class="jugar-modo-btn" id="modo-btn-equipos" onclick="selModoJuego('equipos', this)">
+                        <span class="jugar-modo-icon">👥</span>
+                        <span class="jugar-modo-label">Por Equipos</span>
+                        <span class="jugar-modo-sub">Los equipos compiten entre sí</span>
+                    </button>
+                </div>
+
+                <p class="jugar-inicio-desc" id="jugar-modo-desc">Las preguntas se lanzarán al azar una por una.<br>Selecciona quién respondió correctamente para sumarle puntos.</p>
+                <div class="jugar-inicio-info" id="jugar-inicio-info"></div>
+                <div class="jugar-inicio-puntos">
+                    <span class="jugar-pts-label">Puntos por dificultad:</span>
+                    <span class="pts-chip facil">Fácil +1</span>
+                    <span class="pts-chip medio">Medio +2</span>
+                    <span class="pts-chip dificil">Difícil +3</span>
+                </div>
+                <button class="btn btn-finish" style="font-size:15px;padding:12px 32px;" onclick="iniciarJuego()">Iniciar partida</button>
+            </div>
+
+            <!-- Estado: jugando -->
+            <div id="jugar-activo" class="jugar-activo" style="display:none;">
+
+                <!-- Barra de progreso -->
+                <div class="jugar-progreso-wrap">
+                    <div class="jugar-progreso-info">
+                        <span id="jugar-prog-texto">Pregunta 1 de 10</span>
+                        <span id="jugar-prog-restantes"></span>
+                    </div>
+                    <div class="jugar-progreso-bar">
+                        <div class="jugar-progreso-fill" id="jugar-prog-fill"></div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta pregunta -->
+                <div class="jugar-pregunta-card" id="jugar-pregunta-card">
+                    <div class="jugar-pregunta-header">
+                        <span class="badge" id="jugar-badge">Fácil</span>
+                        <span class="jugar-pts-valor" id="jugar-pts-valor">+1 pt</span>
+                    </div>
+                    <p class="jugar-pregunta-texto" id="jugar-pregunta-texto">Cargando...</p>
+                    <div class="jugar-respuesta-wrap" id="jugar-respuesta-wrap">
+                        <button class="btn-toggle-resp" id="jugar-toggle-resp" onclick="jugarToggleRespuesta()">Ver respuesta</button>
+                        <div class="respuesta-texto" id="jugar-respuesta-texto"></div>
+                    </div>
+                </div>
+
+                <!-- Seleccionar quién respondió -->
+                <div class="jugar-participantes-titulo" id="jugar-seleccion-titulo">¿Quién respondió correctamente?</div>
+                <div class="jugar-participantes" id="jugar-participantes"></div>
+
+                <!-- Acciones -->
+                <div class="jugar-footer">
+                    <button class="btn btn-ghost" onclick="jugarSaltar()">Saltar →</button>
+                    <button class="btn btn-danger-soft" onclick="confirmarDetenerJuego()">Detener</button>
+                </div>
+            </div>
+
+            <!-- Estado: fin de ronda -->
+            <div id="jugar-fin" class="jugar-inicio" style="display:none;">
+                <div class="jugar-inicio-icon">🎉</div>
+                <h2 class="jugar-inicio-titulo">¡Ronda completada!</h2>
+                <p class="jugar-inicio-desc" id="jugar-fin-desc"></p>
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <button class="btn btn-ghost" onclick="volverTablero()">Ver tablero</button>
+                    <button class="btn btn-finish" style="font-size:14px;padding:10px 24px;" onclick="jugarOtraRonda()">Jugar otra ronda</button>
+                </div>
+            </div>
+        </section>
 
         <!-- ===== TAB: TABLERO ===== -->
         <section id="tab-tablero" class="tab-panel active">
@@ -134,10 +219,12 @@
                 <input type="text" id="input-respuesta" class="form-input" placeholder="Respuesta" maxlength="200">
                 <label class="form-label">Dificultad</label>
                 <div class="dificultad-selector">
-                    <button class="diff-btn facil active" data-val="Facil"   onclick="selDiff(this)">Fácil</button>
-                    <button class="diff-btn medio"        data-val="Medio"   onclick="selDiff(this)">Medio</button>
-                    <button class="diff-btn dificil"      data-val="Dificil" onclick="selDiff(this)">Difícil</button>
+                    <button class="diff-btn facil active" data-val="Facil"   data-pts="1" onclick="selDiff(this)">Fácil</button>
+                    <button class="diff-btn medio"        data-val="Medio"   data-pts="2" onclick="selDiff(this)">Medio</button>
+                    <button class="diff-btn dificil"      data-val="Dificil" data-pts="3" onclick="selDiff(this)">Difícil</button>
                 </div>
+                <label class="form-label" style="margin-top:12px;">Puntos que vale <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(se ajusta automáticamente con la dificultad)</span></label>
+                <input type="number" id="input-puntos" class="form-input" value="1" min="1" max="999" step="1" style="width:120px;">
                 <div class="form-actions">
                     <button class="btn btn-ghost" onclick="cerrarModal('modal-pregunta')">Cancelar</button>
                     <button class="btn btn-primary" onclick="agregarPregunta()">Agregar</button>

@@ -1,28 +1,22 @@
 /* ==============================================
    ESTADO
    ============================================== */
-let participantes = [
-    { id: 1, nombre: "Carlos Flores",   puntos: 150 },
-    { id: 2, nombre: "Ana Martínez",    puntos: 200 },
-    { id: 3, nombre: "Luis Pérez",      puntos: 80  },
-    { id: 4, nombre: "Sofía Rodríguez", puntos: 220 }
-];
+// Cargar desde localStorage (sin datos estáticos)
+let participantes  = JSON.parse(localStorage.getItem('quizParticipantes') || '[]');
+let bancoPreguntas = JSON.parse(localStorage.getItem('quizPreguntas')     || '[]');
+let historial      = JSON.parse(localStorage.getItem('quizHistorial')     || '[]');
 
-let bancoPreguntas = [
-    { id: 1, dificultad: "Facil",   pregunta: "¿Qué significa HTML?",                              respuesta: "HyperText Markup Language" },
-    { id: 2, dificultad: "Facil",   pregunta: "¿Qué lenguaje se usa para dar estilos a una web?",  respuesta: "CSS" },
-    { id: 3, dificultad: "Medio",   pregunta: "¿Cómo se declara una variable constante en JS?",    respuesta: "Usando la palabra clave 'const'" },
-    { id: 4, dificultad: "Medio",   pregunta: "¿Qué método de JS añade un elemento al final de un Array?", respuesta: ".push()" },
-    { id: 5, dificultad: "Dificil", pregunta: "¿Qué es el Event Loop en JavaScript?",              respuesta: "El mecanismo que maneja la ejecución de código asíncrono en el motor de JS." },
-    { id: 6, dificultad: "Dificil", pregunta: "¿Cuál es la diferencia entre '==' y '==='?",        respuesta: "'==' compara solo valor, '===' compara valor y tipo de dato." }
-];
+let filtroActual       = "Todas";
+let nextParticipanteId = Math.max(10, ...participantes.map(p => p.id + 1),  10);
+let nextPreguntaId     = Math.max(20, ...bancoPreguntas.map(q => q.id + 1), 20);
 
-// Historial cargado desde localStorage
-let historial = JSON.parse(localStorage.getItem('quizHistorial') || '[]');
-
-let filtroActual      = "Todas";
-let nextParticipanteId = 10;
-let nextPreguntaId     = 20;
+/* helpers de persistencia */
+function guardarParticipantesLS() {
+    localStorage.setItem('quizParticipantes', JSON.stringify(participantes));
+}
+function guardarPreguntasLS() {
+    localStorage.setItem('quizPreguntas', JSON.stringify(bancoPreguntas));
+}
 
 /* ==============================================
    TABS
@@ -36,6 +30,7 @@ function cambiarTab(btn) {
     // Render bajo demanda
     if (btn.dataset.tab === 'tab-historial') renderizarHistorial();
     if (btn.dataset.tab === 'tab-equipos')   renderizarEquipos();
+    if (btn.dataset.tab === 'tab-jugar')     actualizarInfoJuego();
 }
 
 /* ==============================================
@@ -87,6 +82,7 @@ function modificarPuntos(id, esSuma) {
         }
         return p;
     });
+    guardarParticipantesLS();
     renderizarTablero();
 }
 
@@ -95,9 +91,11 @@ function agregarParticipante() {
     const nombre = input.value.trim();
     if (!nombre) { sacudir(input); return; }
     participantes.push({ id: nextParticipanteId++, nombre, puntos: 0 });
+    guardarParticipantesLS();
     cerrarModal('modal-participante');
     input.value = '';
     renderizarTablero();
+    actualizarInfoJuego();
     mostrarToast(`✅ ${nombre} agregado al tablero`);
 }
 
@@ -106,6 +104,8 @@ function eliminarParticipante(id) {
     if (!p) return;
     if (!confirm(`¿Eliminar a "${p.nombre}" del tablero?`)) return;
     participantes = participantes.filter(x => x.id !== id);
+    guardarParticipantesLS();
+    actualizarInfoJuego();
     renderizarTablero();
     mostrarToast(`🗑 ${p.nombre} eliminado`);
 }
@@ -114,6 +114,7 @@ function resetearPuntos() {
     if (participantes.every(p => p.puntos === 0)) return;
     if (!confirm('¿Resetear todos los puntos a 0? Considera guardar la partida primero.')) return;
     participantes = participantes.map(p => ({ ...p, puntos: 0 }));
+    guardarParticipantesLS();
     renderizarTablero();
     mostrarToast('🔄 Puntos reseteados');
 }
@@ -250,6 +251,7 @@ function renderizarPreguntas() {
                 </div>
                 <div class="tarjeta-actions">
                     <span class="badge ${q.dificultad}">${labelDiff(q.dificultad)}</span>
+                    <span class="badge" style="background:var(--bg2);color:var(--text);border:1px solid var(--border);">+${q.puntos ?? PUNTOS_DIFF[q.dificultad] ?? 1} pt${(q.puntos ?? PUNTOS_DIFF[q.dificultad] ?? 1) !== 1 ? 's' : ''}</span>
                     <button class="btn-pts btn-pts-del" onclick="eliminarPregunta(${q.id})" title="Eliminar">🗑</button>
                 </div>
             </div>
@@ -272,19 +274,24 @@ function toggleRespuesta(btn) {
 function agregarPregunta() {
     const preguntaEl  = document.getElementById('input-pregunta');
     const respuestaEl = document.getElementById('input-respuesta');
+    const puntosEl    = document.getElementById('input-puntos');
     const diffBtn     = document.querySelector('.diff-btn.active');
 
     const preguntaVal  = preguntaEl.value.trim();
     const respuestaVal = respuestaEl.value.trim();
     const dificultad   = diffBtn ? diffBtn.dataset.val : 'Facil';
+    const puntos       = Math.max(1, parseInt(puntosEl?.value) || 1);
 
     if (!preguntaVal)  { sacudir(preguntaEl);  return; }
     if (!respuestaVal) { sacudir(respuestaEl); return; }
 
-    bancoPreguntas.push({ id: nextPreguntaId++, dificultad, pregunta: preguntaVal, respuesta: respuestaVal });
+    bancoPreguntas.push({ id: nextPreguntaId++, dificultad, pregunta: preguntaVal, respuesta: respuestaVal, puntos });
+    guardarPreguntasLS();
+    actualizarInfoJuego();
     cerrarModal('modal-pregunta');
     preguntaEl.value  = '';
     respuestaEl.value = '';
+    if (puntosEl) puntosEl.value = 1;
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('.diff-btn.facil')?.classList.add('active');
     renderizarPreguntas();
@@ -294,6 +301,8 @@ function agregarPregunta() {
 function eliminarPregunta(id) {
     if (!confirm('¿Eliminar esta pregunta?')) return;
     bancoPreguntas = bancoPreguntas.filter(q => q.id !== id);
+    guardarPreguntasLS();
+    actualizarInfoJuego();
     renderizarPreguntas();
     mostrarToast('🗑 Pregunta eliminada');
 }
@@ -308,6 +317,8 @@ function setFiltro(btn) {
 function selDiff(btn) {
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    const ptsInput = document.getElementById('input-puntos');
+    if (ptsInput) ptsInput.value = btn.dataset.pts || 1;
 }
 
 /* ==============================================
@@ -377,6 +388,295 @@ _style.textContent = `
 document.head.appendChild(_style);
 
 /* ==============================================
+   MODO JUEGO
+   ============================================== */
+const PUNTOS_DIFF = { Facil: 1, Medio: 2, Dificil: 3 };
+
+let juegoActivo      = false;
+let juegoPreguntas   = [];
+let juegoIndice      = 0;
+let juegoTotal       = 0;
+let juegoAcertadas   = 0;
+let juegoSaltadas    = 0;
+let juegoRespVisible = false;
+let modoJuego        = 'individual'; // 'individual' | 'equipos'
+let juegoEquipoSel   = null;         // id del equipo seleccionado en paso 2
+
+/* ---------- Selector de modo ---------- */
+function selModoJuego(modo, btn) {
+    modoJuego = modo;
+    document.querySelectorAll('.jugar-modo-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const desc = document.getElementById('jugar-modo-desc');
+    if (modo === 'equipos') {
+        desc.innerHTML = 'Las preguntas se lanzan al azar.<br>Selecciona el equipo que respondió y luego el miembro que lo hizo.';
+    } else {
+        desc.innerHTML = 'Las preguntas se lanzarán al azar una por una.<br>Selecciona quién respondió correctamente para sumarle puntos.';
+    }
+    actualizarInfoJuego();
+}
+
+function iniciarJuego() {
+    if (modoJuego === 'equipos') {
+        const equiposConMiembros = equipos.filter(e => e.miembros.length > 0);
+        if (equipos.length === 0) {
+            mostrarToast('Crea equipos en la pestaña Equipos antes de jugar.');
+            return;
+        }
+        if (equiposConMiembros.length === 0) {
+            mostrarToast('Agrega al menos un miembro a algún equipo.');
+            return;
+        }
+    } else {
+        if (participantes.length === 0) {
+            mostrarToast('Agrega participantes en el Tablero antes de jugar.');
+            return;
+        }
+    }
+    if (bancoPreguntas.length === 0) {
+        mostrarToast('Agrega preguntas en el Banco antes de jugar.');
+        return;
+    }
+
+    juegoPreguntas = [...bancoPreguntas].sort(() => Math.random() - 0.5);
+    juegoIndice    = 0;
+    juegoTotal     = juegoPreguntas.length;
+    juegoAcertadas = 0;
+    juegoSaltadas  = 0;
+    juegoActivo    = true;
+    juegoEquipoSel = null;
+
+    document.getElementById('jugar-inicio').style.display = 'none';
+    document.getElementById('jugar-fin').style.display    = 'none';
+    document.getElementById('jugar-activo').style.display = 'block';
+    mostrarPreguntaActual();
+}
+
+function jugarOtraRonda() {
+    iniciarJuego();
+}
+
+function mostrarPreguntaActual() {
+    if (juegoIndice >= juegoTotal) { terminarJuego(); return; }
+
+    const q      = juegoPreguntas[juegoIndice];
+    const numero = juegoIndice + 1;
+    const pts    = q.puntos ?? PUNTOS_DIFF[q.dificultad] ?? 1;
+    juegoRespVisible = false;
+
+    // Progreso
+    document.getElementById('jugar-prog-texto').textContent =
+        `Pregunta ${numero} de ${juegoTotal}`;
+    const restantes = juegoTotal - numero;
+    document.getElementById('jugar-prog-restantes').textContent =
+        `${restantes} restante${restantes !== 1 ? 's' : ''}`;
+    document.getElementById('jugar-prog-fill').style.width =
+        Math.round(((numero - 1) / juegoTotal) * 100) + '%';
+
+    // Badge y puntos
+    const badge = document.getElementById('jugar-badge');
+    badge.textContent = labelDiff(q.dificultad);
+    badge.className   = `badge ${q.dificultad}`;
+    const ptsEl = document.getElementById('jugar-pts-valor');
+    ptsEl.textContent = `+${pts} pt${pts > 1 ? 's' : ''}`;
+    ptsEl.className   = `jugar-pts-valor diff-${q.dificultad.toLowerCase()}`;
+
+    // Texto
+    document.getElementById('jugar-pregunta-texto').textContent = q.pregunta;
+
+    // Respuesta reset
+    const respText   = document.getElementById('jugar-respuesta-texto');
+    const respToggle = document.getElementById('jugar-toggle-resp');
+    respText.textContent = q.respuesta;
+    respText.classList.remove('visible');
+    respToggle.classList.remove('visible');
+    respToggle.textContent = 'Ver respuesta';
+
+    // Animar tarjeta
+    const card = document.getElementById('jugar-pregunta-card');
+    card.style.animation = 'none'; card.offsetHeight;
+    card.style.animation = 'fadeSlideIn 0.28s ease';
+
+    juegoEquipoSel = null;
+    if (modoJuego === 'equipos') {
+        renderizarEquiposJuego(pts);
+    } else {
+        renderizarParticipantesJuego(pts);
+    }
+}
+
+function jugarToggleRespuesta() {
+    juegoRespVisible = !juegoRespVisible;
+    const respText   = document.getElementById('jugar-respuesta-texto');
+    const respToggle = document.getElementById('jugar-toggle-resp');
+    respText.classList.toggle('visible', juegoRespVisible);
+    respToggle.classList.toggle('visible', juegoRespVisible);
+    respToggle.textContent = juegoRespVisible ? 'Ocultar respuesta' : 'Ver respuesta';
+}
+
+function renderizarParticipantesJuego(pts) {
+    const container = document.getElementById('jugar-participantes');
+    const titulo    = document.getElementById('jugar-seleccion-titulo');
+    if (titulo) titulo.textContent = '¿Quién respondió correctamente?';
+    const sorted    = [...participantes].sort((a, b) => b.puntos - a.puntos);
+    container.innerHTML = sorted.map(p => `
+        <button class="jugar-participante-btn" onclick="otorgarPunto(${p.id}, ${pts})">
+            <span class="jugar-part-avatar">${escapeHtml(p.nombre.charAt(0).toUpperCase())}</span>
+            <span class="jugar-part-info">
+                <span class="jugar-part-nombre">${escapeHtml(p.nombre)}</span>
+                <span class="jugar-part-pts">${p.puntos} pts</span>
+            </span>
+            <span class="jugar-part-suma">+${pts}</span>
+        </button>
+    `).join('');
+}
+
+/* ---- MODO EQUIPOS: paso 1 — seleccionar equipo ---- */
+function renderizarEquiposJuego(pts) {
+    const container = document.getElementById('jugar-participantes');
+    const titulo    = document.getElementById('jugar-seleccion-titulo');
+    if (titulo) titulo.textContent = '¿Qué equipo respondió correctamente?';
+
+    const sorted = [...equipos]
+        .filter(e => e.miembros.length > 0)
+        .sort((a, b) => totalEquipo(b) - totalEquipo(a));
+
+    container.innerHTML = sorted.map(eq => `
+        <button class="jugar-participante-btn jugar-equipo-btn" onclick="seleccionarEquipoJuego(${eq.id}, ${pts})">
+            <span class="jugar-part-avatar" style="background:${eq.color}20;border-color:${eq.color};color:${eq.color};">${escapeHtml(eq.nombre.charAt(0).toUpperCase())}</span>
+            <span class="jugar-part-info">
+                <span class="jugar-part-nombre">${escapeHtml(eq.nombre)}</span>
+                <span class="jugar-part-pts">${totalEquipo(eq)} pts totales · ${eq.miembros.length} miembro${eq.miembros.length !== 1 ? 's' : ''}</span>
+            </span>
+            <span class="jugar-part-suma" style="color:${eq.color}">+${pts}</span>
+        </button>
+    `).join('');
+}
+
+/* ---- MODO EQUIPOS: paso 2 — seleccionar miembro del equipo ---- */
+function seleccionarEquipoJuego(equipoId, pts) {
+    juegoEquipoSel = equipoId;
+    const eq        = equipos.find(e => e.id === equipoId);
+    if (!eq) return;
+
+    const container = document.getElementById('jugar-participantes');
+    const titulo    = document.getElementById('jugar-seleccion-titulo');
+    if (titulo) titulo.innerHTML =
+        `<span style="display:inline-flex;align-items:center;gap:6px;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${eq.color}"></span>
+            ${escapeHtml(eq.nombre)} — ¿Quién del equipo respondió?
+        </span>`;
+
+    const miembrosOrdenados = [...eq.miembros].sort((a, b) => b.puntos - a.puntos);
+    container.innerHTML = `
+        <button class="jugar-participante-btn jugar-btn-volver" onclick="renderizarEquiposJuego(${pts})" style="grid-column:1/-1;">
+            <span style="font-size:16px;">←</span>
+            <span class="jugar-part-info"><span class="jugar-part-nombre">Volver a equipos</span></span>
+        </button>
+        ${miembrosOrdenados.map(m => `
+        <button class="jugar-participante-btn" onclick="otorgarPuntoEquipo(${eq.id}, ${m.id}, ${pts})">
+            <span class="jugar-part-avatar" style="background:${eq.color}20;border-color:${eq.color};color:${eq.color};">${escapeHtml(m.nombre.charAt(0).toUpperCase())}</span>
+            <span class="jugar-part-info">
+                <span class="jugar-part-nombre">${escapeHtml(m.nombre)}</span>
+                <span class="jugar-part-pts">${m.puntos} pts</span>
+            </span>
+            <span class="jugar-part-suma" style="color:${eq.color}">+${pts}</span>
+        </button>`).join('')}
+    `;
+}
+
+function otorgarPuntoEquipo(equipoId, miembroId, pts) {
+    const eq = equipos.find(e => e.id === equipoId);
+    if (!eq) return;
+    eq.miembros = eq.miembros.map(m => {
+        if (m.id === miembroId) m.puntos += pts;
+        return m;
+    });
+    renderizarEquipos();
+
+    const card = document.getElementById('jugar-pregunta-card');
+    card.classList.add('jugar-acierto');
+    const miembro = eq.miembros.find(m => m.id === miembroId);
+    mostrarToast(`+${pts} pts → ${miembro?.nombre} (${eq.nombre})`);
+
+    setTimeout(() => {
+        card.classList.remove('jugar-acierto');
+        juegoAcertadas++;
+        juegoEquipoSel = null;
+        juegoIndice++;
+        mostrarPreguntaActual();
+    }, 450);
+}
+
+function otorgarPunto(participanteId, pts) {
+    participantes = participantes.map(p => {
+        if (p.id === participanteId) p.puntos += pts;
+        return p;
+    });
+    guardarParticipantesLS();
+    renderizarTablero();
+
+    const card = document.getElementById('jugar-pregunta-card');
+    card.classList.add('jugar-acierto');
+    const nombre = participantes.find(x => x.id === participanteId)?.nombre || '';
+    mostrarToast(`+${pts} pts → ${nombre}`);
+
+    setTimeout(() => {
+        card.classList.remove('jugar-acierto');
+        juegoAcertadas++;
+        juegoIndice++;
+        mostrarPreguntaActual();
+    }, 450);
+}
+
+function jugarSaltar() {
+    juegoSaltadas++;
+    juegoIndice++;
+    mostrarPreguntaActual();
+}
+
+function confirmarDetenerJuego() {
+    if (confirm('¿Detener la partida? Los puntos acumulados se conservan.')) terminarJuego();
+}
+
+function terminarJuego() {
+    juegoActivo = false;
+    document.getElementById('jugar-activo').style.display = 'none';
+    document.getElementById('jugar-fin').style.display    = 'block';
+
+    let liderInfo = '';
+    if (modoJuego === 'equipos') {
+        const sorted = [...equipos].sort((a, b) => totalEquipo(b) - totalEquipo(a));
+        const lider  = sorted[0];
+        if (lider) liderInfo = `<br>Equipo líder: <strong>${escapeHtml(lider.nombre)}</strong> con ${totalEquipo(lider)} pts`;
+    } else {
+        const sorted = [...participantes].sort((a, b) => b.puntos - a.puntos);
+        const lider  = sorted[0];
+        if (lider) liderInfo = `<br>Líder actual: <strong>${escapeHtml(lider.nombre)}</strong> con ${lider.puntos} pts`;
+    }
+    document.getElementById('jugar-fin-desc').innerHTML =
+        `Preguntas respondidas: <strong>${juegoAcertadas}</strong> · Saltadas: <strong>${juegoSaltadas}</strong>` + liderInfo;
+}
+
+function volverTablero() {
+    const btn = document.querySelector('[data-tab="tab-tablero"]');
+    if (btn) cambiarTab(btn);
+}
+
+// Mostrar info previa en la pantalla de inicio de juego
+function actualizarInfoJuego() {
+    const el = document.getElementById('jugar-inicio-info');
+    if (!el) return;
+    const totalMiembros = equipos.reduce((s, e) => s + e.miembros.length, 0);
+    const chipsJugadores = modoJuego === 'equipos'
+        ? `<span class="jugar-info-chip">${equipos.length} equipo${equipos.length !== 1 ? 's' : ''}</span><span class="jugar-info-chip">${totalMiembros} miembro${totalMiembros !== 1 ? 's' : ''}</span>`
+        : `<span class="jugar-info-chip">${participantes.length} participante${participantes.length !== 1 ? 's' : ''}</span>`;
+    el.innerHTML = chipsJugadores +
+        `<span class="jugar-info-chip">${bancoPreguntas.length} pregunta${bancoPreguntas.length !== 1 ? 's' : ''}</span>`;
+}
+
+/* ==============================================
    FINALIZAR PARTIDA
    ============================================== */
 function finalizarPartida() {
@@ -387,6 +687,7 @@ function finalizarPartida() {
 
     // Guardar en historial primero
     guardarPartida();
+
 
     // Ordenar participantes por puntos descendente
     const sorted = [...participantes].sort((a, b) => b.puntos - a.puntos);
@@ -729,5 +1030,5 @@ function selColor(btn) {
 document.addEventListener('DOMContentLoaded', () => {
     renderizarTablero();
     renderizarPreguntas();
-    // equipos se renderiza al entrar al tab, pero pre-cargamos el estado
+    actualizarInfoJuego();
 });
