@@ -138,7 +138,8 @@ function guardarPartida() {
         fecha,
         hora,
         ganador:     sorted[0].nombre,
-        participantes: sorted.map(p => ({ nombre: p.nombre, puntos: p.puntos }))
+        participantes: sorted.map(p => ({ nombre: p.nombre, puntos: p.puntos })),
+        preguntas:   bancoPreguntas.map(q => ({ pregunta: q.pregunta, respuesta: q.respuesta, dificultad: q.dificultad, puntos: q.puntos }))
     };
 
     historial.unshift(partida); // más reciente primero
@@ -163,12 +164,27 @@ function renderizarHistorial() {
         const card = document.createElement('div');
         card.className = 'historial-card';
         const num = historial.length - idx;
+        const numPregs = partida.preguntas ? partida.preguntas.length : 0;
+
+        const preguntasHtml = numPregs > 0 ? `
+            <div class="historial-preguntas-titulo">❓ ${numPregs} pregunta${numPregs !== 1 ? 's' : ''} guardada${numPregs !== 1 ? 's' : ''}</div>
+            <div class="historial-preguntas-lista">
+                ${partida.preguntas.map((q, qi) => `
+                    <div class="historial-pregunta-item">
+                        <div class="historial-pregunta-header">
+                            <span class="badge ${q.dificultad}" style="font-size:10px;padding:2px 7px;">${labelDiff(q.dificultad)}</span>
+                            <span class="historial-pregunta-num">#${qi + 1}</span>
+                        </div>
+                        <div class="historial-pregunta-texto">${escapeHtml(q.pregunta)}</div>
+                        <div class="historial-pregunta-resp"><strong>R:</strong> ${escapeHtml(q.respuesta)}</div>
+                    </div>`).join('')}
+            </div>` : '';
 
         card.innerHTML = `
             <div class="historial-card-header" onclick="toggleHistorialCard(this)">
                 <div class="historial-meta">
                     <div class="historial-title">Partida #${num}</div>
-                    <div class="historial-subtitle">📅 ${partida.fecha} · 🕐 ${partida.hora} · ${partida.participantes.length} participantes</div>
+                    <div class="historial-subtitle">📅 ${partida.fecha} · 🕐 ${partida.hora} · ${partida.participantes.length} participantes${numPregs > 0 ? ' · ❓ ' + numPregs + ' preguntas' : ''}</div>
                 </div>
                 <div class="historial-ganador">🥇 ${escapeHtml(partida.ganador)}</div>
                 <div class="historial-acciones">
@@ -188,6 +204,7 @@ function renderizarHistorial() {
                         </div>`;
                     }).join('')}
                 </div>
+                ${preguntasHtml}
             </div>
         `;
         container.appendChild(card);
@@ -208,6 +225,28 @@ function eliminarPartida(event, id) {
     localStorage.setItem('quizHistorial', JSON.stringify(historial));
     renderizarHistorial();
     mostrarToast('🗑 Partida eliminada');
+}
+
+/* ==============================================
+   NUEVA PARTIDA — borra participantes y preguntas
+   ============================================== */
+function nuevaPartida() {
+    if (!confirm('¿Iniciar nueva partida? Se borrarán todos los participantes y preguntas actuales.\nLos resultados ya guardados permanecerán en el Historial.')) return;
+    participantes  = [];
+    bancoPreguntas = [];
+    nextParticipanteId = 10;
+    nextPreguntaId     = 20;
+    guardarParticipantesLS();
+    guardarPreguntasLS();
+    cerrarModal('modal-partida');
+    cerrarModal('modal-resultados-equipos');
+    renderizarTablero();
+    renderizarPreguntas();
+    actualizarInfoJuego();
+    // Volver al tablero
+    const btn = document.querySelector('[data-tab="tab-tablero"]');
+    if (btn) cambiarTab(btn);
+    mostrarToast('🆕 Nueva partida iniciada — participantes y preguntas borrados');
 }
 
 function limpiarHistorial() {
